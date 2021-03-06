@@ -80,25 +80,31 @@ class Board {
 
     public void playGame() {
         int i = 0;
-
+        // TODO: isKingInCheck sometimes the queen can take the King without check realised.
+        Random random = new Random(552);
         showBoard();
+        
         while (!gameOver) {
             i++;
             System.out.println("game loop: " + i);
+
             ArrayList<Move> allMoves = new ArrayList<Move>();
             // allMoves from this are just to same spot need to debug.
             allMoves = allAvailableMoves(whiteToMove); 
-            Random random = new Random();
+
+            
             String checkColour;
             if(whiteToMove){
                 checkColour = "Black";
             } else {
                 checkColour = "White";
             }
+            System.out.println(allMoves.size());
             if(allMoves.size() == 0) 
             {
+                /*
                 ArrayList<Move> enemyMoves = allAvailableMoves(!whiteToMove);
-
+                
                 int[] kingPos = getKingPos(whiteToMove);
                 // System.out.println("king pos: " + kingPos[0] + kingPos[1]);
                 boolean checkMate = false;
@@ -108,8 +114,8 @@ class Board {
                         
                     }
                 } 
-
-                if(checkMate) {
+                */
+                if(isKingInCheck(whiteToMove)) {
                     System.out.println("Checkmate for " + checkColour);
                 } else {
                     System.out.println("Stalemate");
@@ -146,16 +152,21 @@ class Board {
     }
 
     public ArrayList<Move> allAvailableMoves(boolean white) {
+        
         ArrayList<Move> moveList = new ArrayList<Move>();
         ArrayList<Piece> pieceList = getPieceColour(white);
 
         // error here
 
         for (Piece piece : pieceList) {
-           
+            // Queen never shows up if white != whiteToMove
+            if(white != whiteToMove){
+                System.out.println(piece.name);
+            }
             ArrayList<Move> availableMoves = availableMoves(piece);
             for(Move move: availableMoves){ 
                // moves are bad in this function
+            
                 moveList.add(move);
                
             }
@@ -207,17 +218,20 @@ class Board {
 
     public ArrayList<Piece> getPieceColour(boolean white) {
         ArrayList<Piece> pieces;
+        
         if (white) // using this boolean instead of whiteToMove to be safer.
         {
             pieces = whitePieces;
         } else {
             pieces = blackPieces;
         }
+
+
         return pieces;
     }
 
     public void executeMove(Move move) {
-
+       
         ArrayList<Piece> pieces;
         pieces = getPieceColour(!move.piece.white);
         boolean takePiece = false;
@@ -238,6 +252,7 @@ class Board {
         blackPosHistory.add(copyPieceArray(blackPieces)); // each time we execute a move we add it to history.
         whitePosHistory.add(copyPieceArray(whitePieces));
         buildBoardArray();
+        
         return;
     }
 
@@ -254,33 +269,54 @@ class Board {
         return;
     }
 
-    public boolean isKingInCheck(Move move) {
-        // isKinginCheck after move
-        System.out.println("start");
-        move.showMove();
-       
-        Move newMove = move.copyMove(); 
-
-        Board copyBoard = this.copyBoard();
-        boolean output = false;
-        copyBoard.executeMove(newMove); // This should add to the blackHistory and white history etc.
-        ArrayList<Move> enemyMoves = copyBoard.allAvailableMoves(!newMove.piece.white);
-
-        int[] kingPos = copyBoard.getKingPos(newMove.piece.white);
-        // System.out.println("king pos: " + kingPos[0] + kingPos[1]);
-        for (Move enemyMove : enemyMoves) {
-            if (enemyMove.moveTo[0] == kingPos[0] && enemyMove.moveTo[1] == kingPos[1]) {
-                output = true;
+    public Move findSimilarMove(Move move) {
+        // only useful if copying board.
+        ArrayList<Piece> pieces= getPieceColour(move.piece.white);
+        for(Piece piece: pieces) {
+            if(move.piece.x == piece.x && move.piece.y == piece.y) {
+                return new Move(piece, move.moveTo, move.takePiece); // This move will now affect copyBoard
             }
         }
+        throw new IllegalStateException("bad");
 
-        copyBoard.undoMove(); // need to make history of pieces for this function.
+    }
+
+    public boolean doChecksPreventMove(Move move) {
         
-        
-        newMove.showMove(); // this move is changed which is very bad.
-        System.out.println("end");
+        // Move newMove = move.copyMove();
+        Board copyBoard = this.copyBoard();
+        Move newMove = copyBoard.findSimilarMove(move); 
+    
+        copyBoard.executeMove(newMove); // This should add to the blackHistory and white history etc.
+        boolean output = false;
+      
+        if(copyBoard.isKingInCheck(newMove.piece.white)) {
+            // checks if after move king is being attacked.
+            output = true;
+            return output;
+        }
+        copyBoard.undoMove();
         return output;
+    }
 
+
+    public boolean isKingInCheck(boolean white) { 
+        // Check if in the current board state the white / black king is in check.
+
+        // 
+    
+        ArrayList<Move> enemyMoves = this.allAvailableMoves(!white);
+        int[] kingPos = this.getKingPos(white);
+        
+        //System.out.println("king pos: " + kingPos[0] + " " + kingPos[1]);
+        for (Move enemyMove : enemyMoves) {
+
+            if (enemyMove.moveTo[0] == kingPos[0] && enemyMove.moveTo[1] == kingPos[1]) {
+              
+                return true;
+            }
+        }
+        return false;
     }
 
     public void buildBoardArray() {
@@ -345,7 +381,7 @@ class Board {
         // Let's check these moves are okay - they are not.
         // System.out.println("**************************************************");
         ArrayList<int[]> path = move.piece.getMovePath(move);
-
+    
         for (int[] pos : path) {
             for (Piece piece : allPieces) {
                 if (pos[0] == piece.x && pos[1] == piece.y) {
@@ -368,6 +404,7 @@ class Board {
     }
 
     public boolean isMovePossible(Move move) {
+       
         // TODO: check for any changes to move.
         //System.out.println("1");
         if (isMoveOntoOwnPiece(move)) {
@@ -391,9 +428,11 @@ class Board {
                 }
             }
         }
-        //System.out.println("4");
+        // only do this when same turn colour
+        
+        
         if (move.piece.white == whiteToMove) {
-            if (isKingInCheck(move)) {
+            if (doChecksPreventMove(move)) {
                 return false;
             }
         }
@@ -522,6 +561,7 @@ class Piece {
     public ArrayList<int[]> getMovePathDiag(Move move) {
         ArrayList<int[]> movePath = new ArrayList<int[]>();
         int[] start = { move.piece.x, move.piece.y };
+        
         int[] end = move.moveTo;
         int xDiff = end[0] - start[0];
         int yDiff = end[1] - start[1];
@@ -537,26 +577,21 @@ class Piece {
         } else {
             yChange = -1;
         }
+
+        if(Math.abs(xDiff) == 1) {
+            return movePath;
+        }
         int xPos = move.piece.x + xChange;
         int yPos = move.piece.y + yChange;
-        // why we getting moveTo an invalid place
-        /*
-         * System.out.println("start: " + xPos + " " + yPos); System.out.println("end: "
-         * + move.moveTo[0] + " " + move.moveTo[1]); System.out.println("piece: " +
-         * this.name + this.white);
-         */
-        // So rook has invalid move from 6,0 to 7,3
+        int[] startPos = {xPos, yPos};
+        movePath.add(startPos);
 
-        while (xPos != move.moveTo[0] || yPos != move.moveTo[1]) {
-
-            xPos += xChange;
+        for(int i = 1; i<Math.abs(xDiff);i++)
+        {
+            xPos+=xChange;
             yPos += yChange;
-            int[] currentPos = { xPos, yPos };
+            int[] currentPos = {xPos,yPos};
             movePath.add(currentPos);
-        }
-
-        for (int[] moveTo : movePath) {
-            // System.out.println("diag dest: " + moveTo[0] + " " + moveTo[1]);
         }
 
         return movePath;
@@ -569,18 +604,11 @@ class Piece {
         if (move.piece.name == "Knight") {
             throw new Error("should not get Knights in getMovePath as they have no move path.");
         }
-
+       
         int[] start = { move.piece.x, move.piece.y };
         int[] end = move.moveTo;
         int xDiff = end[0] - start[0];
         int yDiff = end[1] - start[1];
-
-        // System.out.print("Start piece:" + move.piece.name);
-        // printInt2(start);
-        // System.out.print("End");
-        // printInt2(end);
-
-        //
 
         if (xDiff == 0 || yDiff == 0) // if there is no change in either x or y the move is horizontal.
         {
@@ -721,7 +749,7 @@ class Queen extends Piece {
     }
 
     public Piece copyPiece() {
-        Piece newPiece = new Pawn(this.x, this.y, this.white);
+        Piece newPiece = new Queen(this.x, this.y, this.white);
         return newPiece;
     }
 }
@@ -786,7 +814,7 @@ class Rook extends Piece {
         ArrayList<int[]> possibleMoves = this.moveVert();
         for (int[] moveTo : possibleMoves) {
             Move move = new Move(this, moveTo, false);
-            // move.showMove();
+            
         }
 
         return possibleMoves;
