@@ -332,7 +332,7 @@ class Board {
 
         if(move.piece instanceof Pawn) {
             Pawn pawn = (Pawn) move.piece;
-            if(pawn.enPassantThisTurn && !pawn.enPassantStillPossible) {
+            if(pawn.enPassantThisTurn) {
                 
                 pawn.enPassantThisTurn = false;
                 int change;
