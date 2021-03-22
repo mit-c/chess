@@ -1,9 +1,8 @@
 import java.util.ArrayList;
-import java.util.Random;
+
 import java.util.Scanner;
 
 class Game {
-    // TODO: refactor some stuff from board into this.
     Board board;
     boolean whiteToMove = true;
     boolean whiteCastled = false;
@@ -16,142 +15,7 @@ class Game {
         board = new Board();
     }
 
-    public void playBotGame() {
-        int i = 0;
-        int seed = 5;
-        Random random = new Random(seed);
-        board.showBoard();
 
-        while (!gameOver) {
-            i++;
-            System.out.println("game loop: " + i);
-
-            ArrayList<Move> allMoves = new ArrayList<Move>();
-            // allMoves from this are just to same spot need to debug.
-            allMoves = allAvailableMoves(whiteToMove);
-
-            String checkColour;
-            if (whiteToMove) {
-                checkColour = "Black";
-            } else {
-                checkColour = "White";
-            }
-            System.out.println(allMoves.size());
-            if (allMoves.size() == 0) {
-
-                if (isCheckmate(whiteToMove)) {
-                    System.out.println("Checkmate for " + checkColour);
-                } else {
-                    System.out.println("Stalemate");
-                }
-                board.showBoard();
-                break;
-            }
-            int randomIndex = random.nextInt(allMoves.size());
-            Move move = allMoves.get(randomIndex);
-            executeMove(move,true);
-            board.showBoard();
-
-            whiteToMove = !whiteToMove;
-        }
-     
-    }
-
-    public void playUserGame() {
-        // Similar to play game but ask for user inputs.
-        // Then check if this input is on list of available move
-        // -- this might seem inefficient but this is how chess.com
-        // implements it as you can see the possible moves.
-
-        while (!gameOver) {
-
-            board.showBoard();
-            if (whiteToMove) {
-                System.out.println("White to move");
-            } else {
-                System.out.println("Black to move");
-            }
-
-            ArrayList<Move> allMoves = new ArrayList<Move>();
-            allMoves = allAvailableMoves(whiteToMove);
-            // Check for checkmate.
-            String checkColour;
-            if (whiteToMove) {
-                checkColour = "Black";
-            } else {
-                checkColour = "White";
-            }
-            if (allMoves.size() == 0) {
-
-                if (isCheckmate(whiteToMove)) {
-                    System.out.println("Checkmate for " + checkColour);
-                } else {
-                    System.out.println("Stalemate");
-                }
-                board.showBoard();
-                break;
-            }
-            // Find all unique pieces
-            ArrayList<Piece> uniquePieces = new ArrayList<Piece>();
-            for (Move move : allMoves) {
-                if (uniquePieces.contains(move.piece)) {
-                    continue;
-                } else {
-                    uniquePieces.add(move.piece);
-                }
-            }
-            // Give user list of pieces including position.
-            for (int j = 0; j < uniquePieces.size(); j++) {
-                Piece piece = uniquePieces.get(j);
-                String line = Integer.toString(j + 1) + ". " + piece.name + " at "
-                        + Piece.indexToChessPos(piece.x, piece.y);
-                System.out.println(line);
-
-            }
-            System.out.println("Choose which piece to move by typing number");
-            // Get user input
-            Scanner in = getScanner();
-            int choice = in.nextInt();
-            // Choose the piece they chose.
-            Piece userPiece = uniquePieces.get(choice - 1);
-
-            // Find all available moves for that piece.
-            ArrayList<Move> moves = new ArrayList<Move>();
-            for (Move move : allMoves) {
-                if (userPiece.isEqual(move.piece)) {
-                    moves.add(move);
-                }
-            }
-            // Ask user where they want to move chosen piece.
-            board.showBoard();
-            for (int j = 0; j < moves.size(); j++) {
-                Move move = moves.get(j);
-                String line = Integer.toString(j + 1) + ". " + move.piece.name + " at "
-                        + Piece.indexToChessPos(move.piece.x, move.piece.y) + " to "
-                        + Piece.indexToChessPos(move.moveTo[0], move.moveTo[1]);
-                System.out.println(line);
-
-            }
-
-            System.out.println("Choose where to move by typing number");
-            Scanner moveScanner = getScanner();
-            int moveChoice = moveScanner.nextInt();
-            // Choose the piece they chose.
-            Move moveToPlay = moves.get(moveChoice - 1);
-
-            // Execute move
-            executeMove(moveToPlay,true);
-            whiteToMove = !whiteToMove;
-
-        }
-
-       
-
-    }
-
-    public Scanner getScanner() {
-        return scanner;
-    }
     public boolean isCheckmate(boolean white) {
         boolean tmpWhiteToMove = whiteToMove;
         whiteToMove = !white;
@@ -160,6 +24,10 @@ class Game {
         return checkMate;
 
     }
+
+
+
+
 
     public boolean isKingInCheck(boolean white) {
         // Check if in the current board state the white / black king is in check.
@@ -324,7 +192,7 @@ class Game {
         int rookY;
         ArrayList<Piece> pieces = new ArrayList<Piece>();
         int[] rookPos;
-        int[] rookMoveTo;
+        
         if (move.piece.white) {
             pieces = board.whitePieces;
             rookY = 0;
@@ -335,11 +203,11 @@ class Game {
         int change;
         if (isCastleLeft(move)) {
             rookPos = new int[] { 0, rookY };
-            rookMoveTo = new int[] { move.moveTo[0] + 1, rookY };
+            
             change = -1;
         } else {
             rookPos = new int[] { 7, rookY };
-            rookMoveTo = new int[] { move.moveTo[0] - 1, rookY };
+            
             change = 1;
         }
 
@@ -408,7 +276,6 @@ class Game {
         }
 
         // If we have got this far then we can castle!
-        System.out.println(move.piece.white + " Castling");
         return true;
 
     }
@@ -416,20 +283,19 @@ class Game {
     public boolean isEnPassant(Move move) {
         Pawn attackingPawn = (Pawn) move.piece;
         int yEnPassant;
-        ArrayList<Piece> pieces;
         ArrayList<Piece> enemyPieces;
         ArrayList<ArrayList<Piece>> pieceHistory;
         int change;
 
         if (move.piece.white) {
-            pieces = board.whitePieces;
+          
             enemyPieces = board.blackPieces;
             yEnPassant = 4;
             pieceHistory = board.blackPosHistory;
             change = 1;
 
         } else {
-            pieces = board.blackPieces;
+          
             enemyPieces = board.whitePieces;
             yEnPassant = 3;
             pieceHistory = board.whitePosHistory;
@@ -726,5 +592,10 @@ class Game {
         currentPieces.add(newPiece);
 
     }
+
+    public Scanner getScanner() {
+        return scanner;
+    }
+
 
 }

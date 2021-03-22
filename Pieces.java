@@ -205,11 +205,6 @@ class Piece {
 
             possibleMoves.add(move);
         }
-        // System.out.println("start: " + x + " " + y);
-        for (int[] moveTo : possibleMoves) {
-            // System.out.println("diag moveTo: " + moveTo[0] + " " + moveTo[1]);
-        }
-
         return possibleMoves;
 
     }
@@ -279,7 +274,6 @@ class King extends Piece {
             possibleMoves.add(blackCastleRight);
         }
 
-        int flag = 1;
         return possibleMoves;
     }
 
