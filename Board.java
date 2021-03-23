@@ -1,4 +1,5 @@
 
+import java.awt.Image;
 import java.util.ArrayList;
 
 class Board {
@@ -28,6 +29,7 @@ class Board {
             initPiece(new Bishop(5, yPos, bool));
             initPiece(new Knight(6, yPos, bool));
             initPiece(new Rook(7, yPos, bool));
+           
             // White pawns
             for (int i = 0; i < 8; i++) {
 

@@ -1,6 +1,13 @@
 
 import java.util.ArrayList;
+import java.io.File;
+import java.io.IOException;
 
+import javax.imageio.ImageIO;
+import java.lang.reflect.*;
+import java.lang.reflect.Field;
+
+import java.awt.*;
 class Piece {
     int x;
     int y;
@@ -8,12 +15,48 @@ class Piece {
     String name;
     String chessPos;
 
+    boolean dragged = false;
+    Point mousePos = new Point(-1,-1);
+
     Piece(int x, int y, boolean white) {
         this.x = x;
         this.y = y;
         this.white = white;
         this.chessPos = indexToChessPos(x, y);
+        
+
     }
+
+
+    public Image getImg() {
+        Image imageOut = null;
+        Class<?> pieceClass = this.getClass();
+        
+        Field imgField;
+        try {
+            if(this.white)
+            {
+                imgField = pieceClass.getField("whiteImg");
+            } else {
+                imgField = pieceClass.getField("blackImg");
+            }
+            
+        } catch (NoSuchFieldException nsfe) {
+            throw new RuntimeException(nsfe);
+        }
+
+        try {
+            imageOut = (Image) imgField.get(pieceClass);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return imageOut;
+
+
+        
+   }
 
     public boolean isEqual(Piece piece) {
         // Can make this more strict but not really necessary.
@@ -210,6 +253,8 @@ class Piece {
     }
 
     public ArrayList<int[]> moveVert() {
+
+    
         // This function outputs all possible horizontal and vertical moves
         // from this.x, this.y
         // The error is almost definitely here
@@ -235,14 +280,48 @@ class Piece {
 
         return possibleMoves;
     }
+
+    public static Image loadWhiteImage(String pieceName) {
+        Image whiteImg=null;
+        try {
+            whiteImg = ImageIO.read(new File("chessSprites/" + pieceName + "_White.png"));
+            
+        } catch(IOException ex) {
+            ex.printStackTrace();
+        }
+        return whiteImg;
+
+    }
+
+    public static Image loadBlackImage(String pieceName) {
+        Image blackImg=null;
+        try {
+            blackImg = ImageIO.read(new File("chessSprites/" + pieceName + "_White.png"));
+            
+        } catch(IOException ex) {
+            ex.printStackTrace();
+        }
+        return blackImg;
+
+    }
+    
 }
+
 
 class King extends Piece {
 
+    
+    public static Image whiteImg = loadWhiteImage("King");  
+    public static Image blackImg = loadBlackImage("King");  
+
     King(int x, int y, boolean white) {
         super(x, y, white);
-        name = "King";
+        this.name = "King";
+    
+        
     }
+
+ 
 
     public ArrayList<int[]> findMoves() {
 
@@ -278,13 +357,15 @@ class King extends Piece {
     }
 
     public Piece copyPiece() {
-        Piece newPiece = new King(this.x, this.y, this.white);
+        Piece newPiece = new King(this.x, this.y,  this.white);
         return newPiece;
     }
 
 }
 
 class Queen extends Piece {
+    public static Image whiteImg = loadWhiteImage("Queen");  
+    public static Image blackImg = loadBlackImage("Queen");  
     Queen(int x, int y, boolean white) {
         super(x, y, white);
         name = "Queen";
@@ -302,14 +383,19 @@ class Queen extends Piece {
 
     public Piece copyPiece() {
         Piece newPiece = new Queen(this.x, this.y, this.white);
+        
         return newPiece;
     }
 }
 
 class Knight extends Piece {
+    public static Image whiteImg = loadWhiteImage("Knight");  
+    public static Image blackImg = loadBlackImage("Knight");  
     Knight(int x, int y, boolean white) {
         super(x, y, white);
         name = "Knight";
+
+        
     }
 
     public ArrayList<int[]> findMoves() {
@@ -336,14 +422,18 @@ class Knight extends Piece {
 
     public Piece copyPiece() {
         Piece newPiece = new Knight(this.x, this.y, this.white);
+        
         return newPiece;
     }
 }
 
 class Bishop extends Piece {
+    public static Image whiteImg = loadWhiteImage("Bishop");  
+    public static Image blackImg = loadBlackImage("Bishop");  
     Bishop(int x, int y, boolean white) {
         super(x, y, white);
         name = "Bishop";
+
     }
 
     public ArrayList<int[]> findMoves() {
@@ -353,16 +443,21 @@ class Bishop extends Piece {
 
     public Piece copyPiece() {
         Piece newPiece = new Bishop(this.x, this.y, this.white);
+      
         return newPiece;
     }
 }
 
 class Rook extends Piece {
     boolean hasMoved;
+    public static Image whiteImg = loadWhiteImage("Rook");  
+    public static Image blackImg = loadBlackImage("Rook");  
 
     Rook(int x, int y, boolean white) {
         super(x, y, white);
         name = "Rook";
+ 
+
     }
 
     public ArrayList<int[]> findMoves() {
@@ -373,6 +468,7 @@ class Rook extends Piece {
 
     public Piece copyPiece() {
         Piece newPiece = new Rook(this.x, this.y, this.white);
+     
         return newPiece;
     }
 
@@ -381,13 +477,18 @@ class Rook extends Piece {
 class Pawn extends Piece {
     boolean enPassantThisTurn = false;
     boolean enPassantStillPossible = true;
+    public static Image whiteImg = loadWhiteImage("Pawn");  
+    public static Image blackImg = loadBlackImage("Pawn");  
     Pawn(int x, int y, boolean white) {
         super(x, y, white);
         name = "Pawn";
+
+
     }
 
     public Piece copyPiece() {
         Piece newPiece = new Pawn(this.x, this.y, this.white);
+     
         return newPiece;
     }
 

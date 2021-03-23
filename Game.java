@@ -8,6 +8,7 @@ class Game {
     boolean whiteCastled = false;
     boolean blackCastled = false;
     boolean gameOver = false;
+    
     private Scanner scanner = new Scanner(System.in);
 
 

@@ -1,7 +1,6 @@
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.Collections;
+
 
 class ChessBot {
     Game game;
@@ -21,6 +20,7 @@ class ChessBot {
 
         
     }
+
 
     public void executeBotMove(Move move) {
         // This solves the problem of the pieces being copies.
@@ -68,7 +68,7 @@ class ChessBot {
         ArrayList<Move> allMoves = game.allAvailableMoves(game.whiteToMove);
         ArrayList<Evaluation> output = new ArrayList<Evaluation>();
         ArrayList<Move> movePath = new ArrayList<Move>();
-        
+        double initialEval = whiteEval();
         if(allMoves.size() == 0) {
             if(game.isCheckmate(game.whiteToMove)) {
                 double checkMateEval;
@@ -87,7 +87,7 @@ class ChessBot {
         }
 
         if(depth == 0) {
-            Evaluation zeroDepthEvalObj = new Evaluation(movePath, whiteEval());
+            Evaluation zeroDepthEvalObj = new Evaluation(movePath, initialEval);
             output.add(zeroDepthEvalObj);
             return output;
         } 
@@ -106,6 +106,21 @@ class ChessBot {
                 movePath.addAll(evalationObj.movePath);
                 Evaluation recursiveEvalObj = new Evaluation(movePath, eval);
                 output.add(recursiveEvalObj);
+                /*
+                boolean betterThanBeforeWhite = (eval > initialEval);
+                boolean betterThanBeforeBlack = (eval < initialEval);
+                // Point of this is to make much more efficient (if we improve the position we stop looking).
+                if(game.whiteToMove) {
+                    if(betterThanBeforeWhite) {
+                        return output;
+                    }
+                } else {
+                    if(betterThanBeforeBlack) {
+                        return output;
+                    }
+                }
+                */
+                
             }
         }
         return output;
