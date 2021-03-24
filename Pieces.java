@@ -178,7 +178,7 @@ class Piece {
         int[] startPos = { xPos, yPos };
         movePath.add(startPos);
 
-        for (int i = 1; i < Math.abs(xDiff); i++) {
+        for (int i = 2; i < Math.abs(xDiff); i++) {
             xPos += xChange;
             yPos += yChange;
             int[] currentPos = { xPos, yPos };
@@ -296,7 +296,7 @@ class Piece {
     public static Image loadBlackImage(String pieceName) {
         Image blackImg=null;
         try {
-            blackImg = ImageIO.read(new File("chessSprites/" + pieceName + "_White.png"));
+            blackImg = ImageIO.read(new File("chessSprites/" + pieceName + "_Black.png"));
             
         } catch(IOException ex) {
             ex.printStackTrace();
@@ -340,15 +340,15 @@ class King extends Piece {
 
             }
         }
-        if (this.white && y == 0 && x == 3) {
-            int whiteCastleLeft[] = { 1, 0 };
-            int whiteCastleRight[] = { 5, 0 };
+        if (this.white && y == 0 && x == 4) {
+            int whiteCastleLeft[] = { 2, 0 };
+            int whiteCastleRight[] = { 6, 0 };
             possibleMoves.add(whiteCastleLeft);
             possibleMoves.add(whiteCastleRight);
 
-        } else if (!this.white && y == 7 && x == 3) {
-            int blackCastleLeft[] = { 1, 7 };
-            int blackCastleRight[] = { 5, 7 };
+        } else if (!this.white && y == 7 && x == 4) {
+            int blackCastleLeft[] = { 2, 7 };
+            int blackCastleRight[] = { 6, 7 };
             possibleMoves.add(blackCastleLeft);
             possibleMoves.add(blackCastleRight);
         }
@@ -475,8 +475,8 @@ class Rook extends Piece {
 }
 
 class Pawn extends Piece {
-    boolean enPassantThisTurn = false;
     boolean enPassantStillPossible = true;
+  
     public static Image whiteImg = loadWhiteImage("Pawn");  
     public static Image blackImg = loadBlackImage("Pawn");  
     Pawn(int x, int y, boolean white) {

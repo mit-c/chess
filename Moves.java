@@ -5,6 +5,7 @@ class Move {
     Piece piece;
     int[] moveTo;
     boolean takePiece; // this is a question
+    boolean enPassantThisTurn = false;
 
     Move(Piece piece, int[] moveTo, boolean takePiece) {
         this.piece = piece;

@@ -38,7 +38,7 @@ class Game {
         ArrayList<Move> enemyMoves = this.allAvailableMoves(!white);
         int[] kingPos = board.getKingPos(white);
 
-        // System.out.println("king pos: " + kingPos[0] + " " + kingPos[1]);
+      
         for (Move enemyMove : enemyMoves) {
 
             if (enemyMove.moveTo[0] == kingPos[0] && enemyMove.moveTo[1] == kingPos[1]) {
@@ -185,10 +185,16 @@ class Game {
         if (move.piece.white != whiteToMove) {
             return false;
         }
-
-        if (this.whiteCastled == true) {
-            return false;
+        if(move.piece.white) {
+            if (this.whiteCastled == true) {
+                return false;
+            }
+        } else {
+            if( this.blackCastled == true) {
+                return false;
+            }
         }
+       
 
         int rookY;
         ArrayList<Piece> pieces = new ArrayList<Piece>();
@@ -256,15 +262,17 @@ class Game {
         // Now we need to check if there are checks in between king.
         // Idea: copy code for kingCheck thing.
         // Iterate the King to the moveTo location checking for checks.
-        Board copyBoard = board.copyBoard();
         Game copyGame = copyGame();
-        copyGame.board = copyBoard;
+        if (this.isKingInCheck(move.piece.white)) {
+            return false;
+        }
+
         for (int i = 0; i < 2; i++) {
-            King king = copyBoard.findKing(move.piece.white);
+            King king = copyGame.board.findKing(move.piece.white);
             int[] kingMoveTo = new int[] { king.x + change, king.y };
             Move newMove = new Move(king, kingMoveTo, false);
 
-            executeMove(newMove,false); // This should add to the blackHistory and white history etc.
+            copyGame.executeMove(newMove,false); // This should add to the blackHistory and white history etc.
 
             if (copyGame.isKingInCheck(newMove.piece.white)) {
                 // checks if after move king is being attacked.
@@ -272,9 +280,7 @@ class Game {
             }
         }
 
-        if (isKingInCheck(move.piece.white)) {
-            return false;
-        }
+
 
         // If we have got this far then we can castle!
         return true;
@@ -309,26 +315,30 @@ class Game {
 
         // Need to see if on current board there is a pawn in the relevant position.
         // The relevant position is x +/- 1;
-        int[] enPassantRight = new int[] { move.piece.x - 1, move.piece.y };
-        int[] enPassantLeft = new int[] { move.piece.x + 1, move.piece.y };
-
+        int[] enPassantRight = new int[] { move.piece.x + 1, move.piece.y };
+        int[] enPassantLeft = new int[] { move.piece.x - 1, move.piece.y };
+        
         Pawn enPassantPiece = new Pawn(-1, -1, false);
         boolean enemyPieceInCorrectPos = false;
         for (Piece piece : enemyPieces) {
-            if (piece instanceof Pawn && piece.x == enPassantRight[0] && piece.y == enPassantRight[1]) {
+            if (piece instanceof Pawn && piece.x == enPassantRight[0] && piece.y == enPassantRight[1] && move.moveTo[0] == piece.x) {
                 enPassantPiece = (Pawn) piece;
                 enemyPieceInCorrectPos = true;
-            }
-            if (piece instanceof Pawn && piece.x == enPassantLeft[0] && piece.y == enPassantLeft[1]) {
+                
+            } else if (piece instanceof Pawn && piece.x == enPassantLeft[0] && piece.y == enPassantLeft[1] && move.moveTo[0] == piece.x) {
                 enPassantPiece = (Pawn) piece;
                 enemyPieceInCorrectPos = true;
+               
             }
         }
-        if (!attackingPawn.enPassantStillPossible) {
+
+        
+        if (!enemyPieceInCorrectPos) {
             return false;
         }
 
-        if (!enemyPieceInCorrectPos) {
+
+        if(!enPassantPiece.enPassantStillPossible) {
             return false;
         }
       
@@ -354,9 +364,15 @@ class Game {
         // 2. Now check in pieceHistory whether there is a pawn in the expected place.
 
         for (Piece piece : enemysTurnPieces) {
+            // 4 4 & 4 6
             if (piece instanceof Pawn && piece.x == enPassantPiece.x && piece.y == enPassantPiece.y + 2 * change) {
-                attackingPawn.enPassantThisTurn = true;
-                attackingPawn.enPassantStillPossible = false;
+                if(piece.white == whiteToMove) {
+                    enPassantPiece.enPassantStillPossible = false;
+                } 
+                move.enPassantThisTurn = true;
+                
+
+
                 // If we are checking whether en Passant is possible and it is. Then it will not
                 // be possible next turn.
                 return true;
@@ -435,9 +451,9 @@ class Game {
         // if not actual move then it is not necessary to check which promotion.
         if (move.piece instanceof Pawn) {
             Pawn pawn = (Pawn) move.piece;
-            if (pawn.enPassantThisTurn) {
+            // problem with pawn.enPassant is it might not be an enPassant
 
-                pawn.enPassantThisTurn = false;
+            if (move.enPassantThisTurn) {
                 int change;
                 ArrayList<Piece> enemyPieces = null;
                 if (move.piece.white) {
@@ -462,6 +478,7 @@ class Game {
                 board.buildBoardArray();
                 return;
             }
+        
         }
         if (move.piece instanceof Rook) {
             Rook rook = (Rook) move.piece;
@@ -469,7 +486,11 @@ class Game {
         }
 
         if (move.piece instanceof King) {
-            this.whiteCastled = true;
+            if(move.piece.white) {
+                this.whiteCastled = true;
+            } else {
+                this.blackCastled = true;;
+            }
         }
         ArrayList<Piece> currentPieces = new ArrayList<Piece>();
         int rookPosY;
@@ -486,10 +507,10 @@ class Game {
             int[] rookMoveTo;
             int[] currentRookPos;
             if (isCastleLeft(move)) {
-                rookMoveTo = new int[] { 2, rookPosY };
+                rookMoveTo = new int[] { 3, rookPosY };
                 currentRookPos = new int[] { 0, rookPosY };
             } else {
-                rookMoveTo = new int[] { 4, rookPosY };
+                rookMoveTo = new int[] { 5, rookPosY };
                 currentRookPos = new int[] { 7, rookPosY };
             }
             for (Piece piece : currentPieces) {
@@ -497,14 +518,15 @@ class Game {
                     Rook castlingRook = (Rook) piece;
                     castlingRook.x = rookMoveTo[0];
                     castlingRook.y = rookMoveTo[1];
+                    move.piece.x = move.moveTo[0];
+                    move.piece.y = move.moveTo[1];
                     castlingRook.chessPos = Piece.indexToChessPos(castlingRook.x, castlingRook.y);
                     break;
                 }
-                // Do I need to copy these -- shouldn't mattter too much.
-                board.addToHistory();
-                board.buildBoardArray();
-                return;
             }
+            board.addToHistory();
+            board.buildBoardArray();
+            return;
 
         }
         ArrayList<Piece> pieces;

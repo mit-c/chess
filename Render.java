@@ -10,42 +10,73 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 
+class MouseInBoard {
+    int xIndex;
+    int yIndex;
+    boolean isMouseInBoard;
+    MouseInBoard(int xIndex, int yIndex, boolean isMouseInBoard) {
 
+        this.xIndex = xIndex;
+        this.yIndex = yIndex;
+        this.isMouseInBoard = isMouseInBoard;
+    } 
+
+    MouseInBoard(boolean isMouseInBoard) {
+        this.isMouseInBoard = isMouseInBoard;
+    }
+}
 
 
 class myMouseAdapter extends MouseAdapter {
     ChessCanvas panel;
     ChessBot bot;
+    Play play;
     JFrame jFrame;
     boolean mousePressed = false;
-    public myMouseAdapter(ChessCanvas panel, ChessBot bot) {
+    public myMouseAdapter(ChessCanvas panel, Play play) {
         this.panel = panel;
-        this.bot = bot;
+        this.play = play;
+        this.bot = play.bot;
         
     }
 
     public void mousePressed(MouseEvent e) {
+        this.play.allMoves = bot.game.allAvailableMoves(bot.game.whiteToMove);
+        for(Move move:play.allMoves) {
+            move.showMove();
+        }
         System.out.println(e.getX() + " " + e.getY());
+        MouseInBoard check = isMouseOverSquare(e);
+        int xIndex = check.xIndex;
+        int yIndex = check.yIndex;
+        if(check.isMouseInBoard) {
+            ArrayList<Piece> pieces = this.bot.game.board.getPieceColour(this.bot.game.whiteToMove);
+            for(Piece piece: pieces) {
+                if(piece.x == xIndex && piece.y == yIndex) {
+                    System.out.println(piece.name);
+                    panel.mousePressed = true;
+                    panel.pieceSelected = piece;
+                    panel.pieceSelected.dragged = true;
+                    break;
+                   
+                }
+            }
+        }
+        
+    }
+
+    private MouseInBoard isMouseOverSquare(MouseEvent e) {
         Point xy = e.getPoint();
         int x,y;
         x = xy.x;
         y = xy.y;
-        int height = panel.getHeight();
-        int width = panel.getWidth();
 
-        int chessHeight = Math.round(height * panel.perc);
-        int chessWidth = Math.round(width * panel.perc);
-        int squareHeight = (int)Math.round(chessHeight / 8);
-        int squareWidth  = (int)Math.round(chessWidth  / 8);
-
-        int xOffset = Math.round((height - chessHeight) / 2);
-        int yOffset = (int)Math.round((height - chessWidth)/ 2);
         int xMin,xMax, yMin,yMax, xIndex=0, yIndex=0;
         boolean inXRange = false;
         boolean inYRange = false;
         for(int i = 0; i<8; i++) {
-            xMin = xOffset + i * squareWidth;
-            xMax = xOffset + (i+1) * squareWidth;
+            xMin = panel.xOffset + i * panel.squareWidth;
+            xMax = panel.xOffset + (i+1) * panel.squareWidth;
             if(x > xMin && x < xMax) {
                 inXRange = true;
                 xIndex = i;
@@ -54,8 +85,8 @@ class myMouseAdapter extends MouseAdapter {
         }
 
         for(int j=0; j<8;j++) {
-            yMin = yOffset + j* squareHeight;
-            yMax = yOffset + (j+1)*squareHeight;
+            yMin = panel.yOffset + j* panel.squareHeight;
+            yMax = panel.yOffset + (j+1)*panel.squareHeight;
             if(y > yMin && y<yMax) {
                 inYRange = true;
                 yIndex = 7-j;
@@ -64,28 +95,37 @@ class myMouseAdapter extends MouseAdapter {
         }
 
         if(inXRange && inYRange) {
-            ArrayList<Piece> pieces = this.bot.game.board.getPieceColour(this.bot.game.whiteToMove);
-            for(Piece piece: pieces) {
-                if(piece.x == xIndex && piece.y == yIndex) {
-                    System.out.println(piece.name);
-                    mousePressed = true;
-                    panel.pieceSelected = piece;
-                    panel.pieceSelected.dragged = true;
-                    break;
-                }
-            }
-            
+            MouseInBoard outObj = new MouseInBoard(xIndex,yIndex,true);
+            return outObj;
         }
         
+        MouseInBoard outObj = new MouseInBoard(false);
+        return outObj;
     }
 
     public void mouseReleased(MouseEvent e) {
         
         mousePressed = false;
-        if(panel.pieceSelected != null) {
+        if(panel.pieceSelected != null && panel.pieceSelected.dragged) {
             panel.pieceSelected.dragged = false;
+            MouseInBoard check = isMouseOverSquare(e);
+            if(check.isMouseInBoard) {
+                int xIndex = check.xIndex;
+                int yIndex = check.yIndex;
+                for(Move move: play.allMoves) {
+                    if(move.moveTo[0] == xIndex && move.moveTo[1] == yIndex && move.piece == panel.pieceSelected) {
+                        // Move is valid so execute move.
+                        // As only human moves can be executed with mouse can just use executeMove.
+                        bot.game.executeMove(move, true);
+                        bot.game.whiteToMove = !bot.game.whiteToMove;
+                        play.allMoves = play.bot.game.allAvailableMoves(bot.game.whiteToMove);
+                        
+                    }
+                }
+            }
             
         }
+        this.panel.repaint();
         
 
     }
@@ -97,11 +137,13 @@ class myMouseAdapter extends MouseAdapter {
 class myMouseMotionAdapter extends MouseMotionAdapter {
     ChessCanvas panel;
     ChessBot bot;
+    Play play;
     
 
-    public myMouseMotionAdapter(ChessCanvas panel, ChessBot bot) {
+    public myMouseMotionAdapter(ChessCanvas panel, Play play) {
         this.panel = panel;
-        this.bot = bot;
+        this.bot = play.bot;
+        this.play = play;
         
     }
 
@@ -129,12 +171,12 @@ class Render extends JPanel {
     int windowWidth;
     int windowHeight;
     JFrame f;
-    float perc = (float)0.9;
-    Render(int windowWidth, int windowHeight) {
-        
+    float perc;
+    Render(Play play,int windowWidth, int windowHeight,  float perc) {
+        this.perc = perc;
         this.windowWidth = windowWidth;
         this.windowHeight = windowHeight;
-        this.play = new Play();
+        this.play = play;
         this.bot = this.play.bot;
         this.f = new JFrame("Chess Game");
        
@@ -151,6 +193,7 @@ class Render extends JPanel {
             }
         });
         f.setVisible(true);
+        
         
         
     }
@@ -194,8 +237,8 @@ class ChessCanvas extends JPanel  {
 
         xOffset = Math.round((height - chessHeight) / 2);
         yOffset = (int)Math.round((height - chessWidth)/ 2);
-        this.addMouseListener(new myMouseAdapter(this,bot));
-        this.addMouseMotionListener(new myMouseMotionAdapter(this, bot));
+        this.addMouseListener(new myMouseAdapter(this,play));
+        this.addMouseMotionListener(new myMouseMotionAdapter(this, play));
         
     }
 
@@ -224,8 +267,8 @@ class ChessCanvas extends JPanel  {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        paintChessBoard(g,(float)0.9);
-        paintChessPieces(g,(float)0.9);
+        paintChessBoard(g,(float)perc);
+        paintChessPieces(g,(float)perc);
         
         
 

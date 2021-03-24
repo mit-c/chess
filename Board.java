@@ -24,8 +24,8 @@ class Board {
             initPiece(new Rook(0, yPos, bool));
             initPiece(new Knight(1, yPos, bool));
             initPiece(new Bishop(2, yPos, bool));
-            initPiece(new Queen(4, yPos, bool));
-            initPiece(new King(3, yPos, bool));
+            initPiece(new Queen(3, yPos, bool));
+            initPiece(new King(4, yPos, bool));
             initPiece(new Bishop(5, yPos, bool));
             initPiece(new Knight(6, yPos, bool));
             initPiece(new Rook(7, yPos, bool));
@@ -63,7 +63,8 @@ class Board {
         ArrayList<Piece> copiedArray = new ArrayList<Piece>();
 
         for (Piece piece : pieces) {
-            copiedArray.add(piece.copyPiece());
+            Piece newPiece = piece.copyPiece();
+            copiedArray.add(newPiece);
         }
         return copiedArray;
     }

@@ -4,9 +4,18 @@ import java.util.Scanner;
 
 class Play {
     ChessBot bot;
+    ArrayList<Move> allMoves = new ArrayList<Move>();
     
     public Play() {
         bot = new ChessBot();
+    }
+
+    public void againstPersonGUI(int windowWidth, int windowHeight) {
+     
+        Render r = new Render(this,windowWidth,windowHeight,(float)0.7);
+        Game game = bot.game;
+        
+
     }
 
     public void againstBot(int depth) {
@@ -27,17 +36,17 @@ class Play {
             game.whiteToMove = !game.whiteToMove;
 
             // User move
-            ArrayList<Move> allMoves = game.allAvailableMoves(game.whiteToMove);
-            if(isGameOver(allMoves)) {
+            allMoves = game.allAvailableMoves(game.whiteToMove);
+            if(isGameOver()) {
                 break;
             }
             // Find unique pieces
-            ArrayList<Piece> uniquePieces = findUniquePieces(allMoves);
+            ArrayList<Piece> uniquePieces = findUniquePieces();
             printUniquePieces(uniquePieces);
             int choice = getUserChoice();
             Piece userPiece = uniquePieces.get(choice-1);
 
-            ArrayList<Move> moves = findMovesForPiece(allMoves, userPiece);
+            ArrayList<Move> moves = findMovesForPiece(userPiece);
             printMoves(moves);
             int moveChoice = getUserChoice();
 
@@ -63,13 +72,13 @@ class Play {
                 System.out.println("Black to move");
             }
 
-            ArrayList<Move> allMoves = new ArrayList<Move>();
+            allMoves = new ArrayList<Move>();
             allMoves = game.allAvailableMoves(game.whiteToMove);
-            if(isGameOver(allMoves)){
+            if(isGameOver()){
                 break;
             }
             // Find all unique pieces
-            ArrayList<Piece> uniquePieces = findUniquePieces(allMoves);
+            ArrayList<Piece> uniquePieces = findUniquePieces();
             // Give user list of pieces including position.
             printUniquePieces(uniquePieces);
             
@@ -80,7 +89,7 @@ class Play {
             Piece userPiece = uniquePieces.get(choice - 1);
 
             // Find all available moves for that piece.
-            ArrayList<Move> moves = findMovesForPiece(allMoves, userPiece);
+            ArrayList<Move> moves = findMovesForPiece(userPiece);
             // Ask user where they want to move chosen piece.
             printMoves(moves);
             int moveChoice = getUserChoice();
@@ -109,8 +118,8 @@ class Play {
             i++;
             System.out.println("game loop: " + i);
 
-            ArrayList<Move> allMoves = game.allAvailableMoves(game.whiteToMove);
-            if(isGameOver(allMoves)){
+            allMoves = game.allAvailableMoves(game.whiteToMove);
+            if(isGameOver()){
                 break;
             }
 
@@ -124,7 +133,7 @@ class Play {
      
     }
 
-    public boolean isGameOver(ArrayList<Move> allMoves) {
+    public boolean isGameOver() {
         String checkColour;
         Game game = this.bot.game;
         if (game.whiteToMove) {
@@ -132,7 +141,7 @@ class Play {
         } else {
             checkColour = "White";
         }
-        System.out.println(allMoves.size());
+     
         if (allMoves.size() == 0) {
 
             if (game.isCheckmate(game.whiteToMove)) {
@@ -150,7 +159,7 @@ class Play {
 
 
     
-    public ArrayList<Piece> findUniquePieces(ArrayList<Move> allMoves){
+    public ArrayList<Piece> findUniquePieces(){
         ArrayList<Piece> uniquePieces = new ArrayList<Piece>();
         for (Move move : allMoves) {
             if (uniquePieces.contains(move.piece)) {
@@ -173,7 +182,7 @@ class Play {
         System.out.println("Choose which piece to move by typing number");
     }
 
-    public ArrayList<Move> findMovesForPiece(ArrayList<Move> allMoves, Piece userChoice) {
+    public ArrayList<Move> findMovesForPiece(Piece userChoice) {
         ArrayList<Move> moves = new ArrayList<Move>();
         for (Move move : allMoves) {
             if (userChoice.isEqual(move.piece)) {
